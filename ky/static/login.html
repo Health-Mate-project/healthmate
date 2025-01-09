@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>로그인</title>
+</head>
+<body>
+    <h1>로그인</h1>
+    <form id="loginForm">
+        <input type="email" name="email" placeholder="이메일" required>
+        <input type="password" name="password" placeholder="비밀번호" required>
+        <button type="submit">로그인</button>
+    </form>
+    <a href="/static/signup.html">회원가입</a>
+ 
+    <script>
+        const form = document.getElementById('loginForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('username', e.target.email.value);
+            formData.append('password', e.target.password.value);
+            
+            try {
+                const response = await fetch('http://localhost:8000/token', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    window.location.href = '/static/blog_list.html';
+                } else {
+                    alert('로그인 실패');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('로그인 중 오류가 발생했습니다.');
+            }
+        });
+    </script>
+</body>
+</html>
