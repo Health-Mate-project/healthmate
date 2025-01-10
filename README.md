@@ -48,6 +48,11 @@ Stacks 🐈
 ![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=Discord&logoColor=white)
 ![Gather](https://img.shields.io/badge/Gather-000000?style=for-the-badge&logo=Gather&logoColor=white)
 
+## DB 설계도
+<div style="backgroundColor: .white;">
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/4fbe2308-eee8-4310-9a4a-402cf17f0376">
+</div>
+
 ## 화면 구성 📺
 
 ## 디렉토리 구조 📁(개발 완료 후, 업데이트 예정)
