@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .auth-button {
+            padding: 4px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .logout-button {
+            background-color: #f8f9fa;
+            color: #dc3545;
+            border: 1px solid #dc3545;
+        }
+
+        .logout-button:hover {
+            background-color: #dc3545;
+            color: #ffffff;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-section {
+            flex: 1;
+        }
+
+        .image-section {
+            flex: 1;
+        }
+
+        .form-image {
+            width: 90%;
+            border-radius: 8px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            background-color: #f8d7da;
+            display: none;
+        }
+
+        .routine-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .routine-table th {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            border: 1px solid #eee;
+        }
+
+        .routine-table td {
+            padding: 15px;
+            border: 1px solid #eee;
+            vertical-align: top;
+        }
+
+        .day-header {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            padding: 15px;
+        }
+
+        .content-cell {
+            padding: 15px;
+            line-height: 1.6;
+        }
+
+        .routine-cell, .diet-cell {
+            width: 50%;
+        }
+
+        .cell-title {
+            font-weight: bold;
+            color: #4285f4;
+            margin-bottom: 10px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .intro-message {
+            text-align: center;
+            margin-bottom: 40px;
+            color: #333;
+            font-size: 1.2rem;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        
+
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="auth-buttons">
+            <button onclick="handleLogout()" class="auth-button logout-button">로그아웃</button>
+        </div>
+    </header>
+<div class="intro-message">
+        <h1>건강 관리 목표를 입력하고 루틴 및 식단을 추천받아보세요.</h1>
+    </div>
+
+    <div class="container">
+        <div class="image-section">
+            <img src="./image/helathmate_main.png" alt="healthmate 메인 이미지" class="form-image">
+        </div>
+        <div class="form-section">
+            <h2>건강 관리 목표 입력</h2>
+            <form id="healthForm" action="" method="post">
+                <div class="form-group">
+                    <label>운동 목적을 입력해 주세요.</label>
+                    <input type="text" id="exercise-purpose" placeholder="예) 체중 감량" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>운동 가능 횟수를 입력해 주세요.</label>
+                    <input type="text" id="exercise-frequency" placeholder="예) 3일" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>구체적인 목표를 입력해 주세요.</label>
+                    <input type="text" id="specific-goal" placeholder="예) 체중 5kg 감량" required>
+                </div>
+                
+                <button type="submit">루틴 및 식단 추천!</button>
+                <div id="error-message" class="error-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="loading" style="display: none;">
+        맞춤형 루틴과 식단을 생성하고 있습니다...
+    </div>
+
+    <table id="routineTable" class="routine-table" style="display: none;">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>운동 루틴</th>
+                <th>추천 식단</th>
+            </tr>
+        </thead>
+        <tbody id="routineTableBody">
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('healthForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const purpose = document.getElementById('exercise-purpose').value;
+            const frequency = document.getElementById('exercise-frequency').value;
+            const goal = document.getElementById('specific-goal').value;
+            const errorMessage = document.getElementById('error-message');
+            
+            // 로딩 상태 표시
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('routineTable').style.display = 'none';
+            errorMessage.style.display = 'none';
+
+            try {
+                const response = await fetch('https://open-api.jejucodingcamp.workers.dev/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: `${frequency} 동안의 일일 운동 루틴과 식단을 추천해주세요. 다음 정보를 참고해주세요:
+                        운동 목적: ${purpose}
+                        운동 가능 횟수: ${frequency}
+                        구체적인 목표: ${goal}
+                        
+                        각 일자별로 다음 형식으로 답변해주세요:
+                        Day 1:
+                        운동루틴:
+                        - 상세 운동 계획
+                        
+                        식단:
+                        - 아침:
+                        - 점심:
+                        - 저녁:
+                        - 간식:
+                        
+                        Day 2:
+                        (같은 형식으로 계속...)`
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // API 응답 구조에 맞게 수정
+                const recommendation = data.response;
+
+                // 테이블 본문 비우기
+                const tableBody = document.getElementById('routineTableBody');
+                tableBody.innerHTML = '';
+
+                // 일자별로 분리하고 테이블에 추가
+                const days = recommendation.split('Day').filter(day => day.trim());
+                
+                days.forEach(day => {
+                    const [dayNum, content] = day.split(':');
+                    if (!content) return; // 잘못된 형식이면 건너뛰기
+
+                    const [routinePart, dietPart] = content.split('식단:');
+                    if (!routinePart || !dietPart) return; // 잘못된 형식이면 건너뛰기
+
+                    const row = document.createElement('tr');
+                    
+                    // 일자 열
+                    const dayCell = document.createElement('td');
+                    dayCell.textContent = `Day ${dayNum.trim()}`;
+                    dayCell.className = 'day-header';
+                    
+                    // 운동 루틴 열
+                    const routineCell = document.createElement('td');
+                    routineCell.className = 'content-cell routine-cell';
+                    routineCell.innerHTML = `<div class="cell-title">운동 루틴</div>${routinePart.replace('운동루틴:', '').replace(/\n/g, '<br>')}`;
+                    
+                    // 식단 열
+                    const dietCell = document.createElement('td');
+                    dietCell.className = 'content-cell diet-cell';
+                    dietCell.innerHTML = `<div class="cell-title">추천 식단</div>${dietPart.replace(/\n/g, '<br>')}`;
+                    
+                    row.appendChild(dayCell);
+                    row.appendChild(routineCell);
+                    row.appendChild(dietCell);
+                    tableBody.appendChild(row);
+                });
+
+                // 결과 표시
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('routineTable').style.display = 'table';
+
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = '추천을 생성하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+                errorMessage.style.display = 'block';
+                document.getElementById('loading').style.display = 'none';
+            }
+        });
+    </script>
+    <script>
+        function handleLogout() {
+            // 로그아웃 처리 로직을 여기에 구현
+            // 예: 세션/토큰 제거, 서버에 로그아웃 요청 등
+            location.href = 'C:\Users\김강연\Healthmate\ky\static\login.html';
+        }
+    </script>
+</body>
+</html>
