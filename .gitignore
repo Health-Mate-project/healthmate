@@ -5,4 +5,4 @@ ENV/
 .env
 
 # Python
-__pycache__/%
+__pycache__
