@@ -223,44 +223,54 @@
     </table>
 
     <script>
+        // 토큰 확인 및 리다이렉트
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = '/login.html';
+            }
+        }
+
+        // 페이지 로드 시 인증 확인
+        checkAuth();
+
+        // 로그아웃 처리
+        function handleLogout() {
+            localStorage.removeItem('token');
+            window.location.href = '/login.html';
+        }
+
         document.getElementById('healthForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const purpose = document.getElementById('exercise-purpose').value;
-            const frequency = document.getElementById('exercise-frequency').value;
-            const goal = document.getElementById('specific-goal').value;
+            const exerciseCount = document.getElementById('exercise-count').value;
+            const healthPurpose = document.getElementById('health-purpose').value;
+            const detailedGoal = document.getElementById('detailed-goal').value;
             const errorMessage = document.getElementById('error-message');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
             
             // 로딩 상태 표시
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('routineTable').style.display = 'none';
+            loading.style.display = 'block';
+            results.style.display = 'none';
             errorMessage.style.display = 'none';
 
             try {
-                const response = await fetch('https://open-api.jejucodingcamp.workers.dev/', {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('인증이 필요합니다.');
+                }
+
+                const response = await fetch('/healthmate', {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        prompt: `${frequency} 동안의 일일 운동 루틴과 식단을 추천해주세요. 다음 정보를 참고해주세요:
-                        운동 목적: ${purpose}
-                        운동 가능 횟수: ${frequency}
-                        구체적인 목표: ${goal}
-                        
-                        각 일자별로 다음 형식으로 답변해주세요:
-                        Day 1:
-                        운동루틴:
-                        - 상세 운동 계획
-                        
-                        식단:
-                        - 아침:
-                        - 점심:
-                        - 저녁:
-                        - 간식:
-                        
-                        Day 2:
-                        (같은 형식으로 계속...)`
+                        exercise_count: parseInt(exerciseCount),
+                        health_management_purpose: healthPurpose,
+                        detailed_goal: detailedGoal || null
                     })
                 });
 
@@ -270,55 +280,23 @@
 
                 const data = await response.json();
                 
-                // API 응답 구조에 맞게 수정
-                const recommendation = data.response;
-
-                // 테이블 본문 비우기
-                const tableBody = document.getElementById('routineTableBody');
-                tableBody.innerHTML = '';
-
-                // 일자별로 분리하고 테이블에 추가
-                const days = recommendation.split('Day').filter(day => day.trim());
+                // ### 구분자로 나눈 응답 처리
+                const sections = data.message.split('###');
                 
-                days.forEach(day => {
-                    const [dayNum, content] = day.split(':');
-                    if (!content) return; // 잘못된 형식이면 건너뛰기
-
-                    const [routinePart, dietPart] = content.split('식단:');
-                    if (!routinePart || !dietPart) return; // 잘못된 형식이면 건너뛰기
-
-                    const row = document.createElement('tr');
-                    
-                    // 일자 열
-                    const dayCell = document.createElement('td');
-                    dayCell.textContent = `Day ${dayNum.trim()}`;
-                    dayCell.className = 'day-header';
-                    
-                    // 운동 루틴 열
-                    const routineCell = document.createElement('td');
-                    routineCell.className = 'content-cell routine-cell';
-                    routineCell.innerHTML = `<div class="cell-title">운동 루틴</div>${routinePart.replace('운동루틴:', '').replace(/\n/g, '<br>')}`;
-                    
-                    // 식단 열
-                    const dietCell = document.createElement('td');
-                    dietCell.className = 'content-cell diet-cell';
-                    dietCell.innerHTML = `<div class="cell-title">추천 식단</div>${dietPart.replace(/\n/g, '<br>')}`;
-                    
-                    row.appendChild(dayCell);
-                    row.appendChild(routineCell);
-                    row.appendChild(dietCell);
-                    tableBody.appendChild(row);
-                });
+                // 각 섹션 내용 표시
+                document.getElementById('profile-content').innerHTML = sections[1].replace(/\n/g, '<br>');
+                document.getElementById('routine-content').innerHTML = sections[2].replace(/\n/g, '<br>');
+                document.getElementById('tips-content').innerHTML = sections[3].replace(/\n/g, '<br>');
 
                 // 결과 표시
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('routineTable').style.display = 'table';
+                loading.style.display = 'none';
+                results.style.display = 'block';
 
             } catch (error) {
                 console.error('Error:', error);
-                errorMessage.textContent = '추천을 생성하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
+                errorMessage.textContent = error.message || '추천을 생성하는 중 오류가 발생했습니다. 다시 시도해 주세요.';
                 errorMessage.style.display = 'block';
-                document.getElementById('loading').style.display = 'none';
+                loading.style.display = 'none';
             }
         });
     </script>
