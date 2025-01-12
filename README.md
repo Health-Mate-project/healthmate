@@ -54,6 +54,10 @@ Stacks 🐈
 </div>
 
 ## 화면 구성 📺
+![image](https://github.com/user-attachments/assets/0bb5e089-e604-4fb6-940a-fc205a30bca1)
+![image](https://github.com/user-attachments/assets/a27dad38-19f4-4196-baa3-9db826e85abe)
+![image](https://github.com/user-attachments/assets/37467f5a-a465-43c8-97f7-dbbadb872ec7)
+
 
 ## 디렉토리 구조 📁(개발 완료 후, 업데이트 예정)
 ```bash
