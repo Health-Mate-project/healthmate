@@ -210,32 +210,68 @@
     </div>
 
     <script>
-        function handleSignup(event) {
+        // 이미 로그인된 경우 메인 페이지로 리다이렉트
+        if (localStorage.getItem('token')) {
+            window.location.href = '/main.html';
+        }
+
+        async function handleSignup(event) {
             event.preventDefault();
             
-            const id = document.getElementById('id').value;
+            const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const passwordConfirm = document.getElementById('password-confirm').value;
             const name = document.getElementById('name').value;
             const age = document.getElementById('age').value;
+            const gender = document.querySelector('input[name="gender"]:checked')?.value;
             const height = document.getElementById('height').value;
             const weight = document.getElementById('weight').value;
             const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
             
             // 비밀번호 확인
             if (password !== passwordConfirm) {
-                errorMessage.style.display = 'block';
                 errorMessage.textContent = '비밀번호가 일치하지 않습니다.';
+                errorMessage.style.display = 'block';
                 return false;
             }
             
-            // 기본적인 유효성 검사
-            if (id && password && name && age && height && weight) {
-                // 여기에 회원가입 로직 구현
-                console.log('회원가입 시도:', { id, name, age, height, weight });
-                
+            try {
+                const response = await fetch('/user/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        name,
+                        age: parseInt(age),
+                        gender,
+                        height: parseFloat(height),
+                        weight: parseFloat(weight)
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    successMessage.textContent = '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.';
+                    successMessage.style.display = 'block';
+                    
+                    // 로그인 페이지로 리다이렉트
+                    setTimeout(() => {
+                        window.location.href = '/login.html';
+                    }, 1000);
+                } else {
+                    throw new Error(data.detail || '회원가입에 실패했습니다.');
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message;
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = '회원가입 기능 구현 중입니다.';
             }
             
             return false;

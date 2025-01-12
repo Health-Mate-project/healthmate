@@ -202,18 +202,51 @@
     </div>
 
     <script>
-        function handleLogin(event) {
+        // 이미 로그인된 경우 메인 페이지로 리다이렉트
+        if (localStorage.getItem('token')) {
+            window.location.href = '/main.html';
+        }
+
+        async function handleLogin(event) {
             event.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
             
-            if (email && password) {
-                console.log('로그인 시도:', { email });
-                
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+
+            try {
+                const response = await fetch('/user/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 토큰 저장
+                    localStorage.setItem('token', data.access_token);
+                    
+                    // 성공 메시지 표시
+                    successMessage.textContent = '로그인 성공! 메인 페이지로 이동합니다.';
+                    successMessage.style.display = 'block';
+                    
+                    // 메인 페이지로 리다이렉트
+                    setTimeout(() => {
+                        window.location.href = '/main.html';
+                    }, 1000);
+                } else {
+                    throw new Error(data.detail || '로그인에 실패했습니다.');
+                }
+            } catch (error) {
+                errorMessage.textContent = error.message;
                 errorMessage.style.display = 'block';
-                errorMessage.textContent = '로그인 기능 구현 중입니다.';
             }
             
             return false;
