@@ -187,6 +187,18 @@ def create_token(username: str):
 
 # Token을 통해서 현재 유저 정보 가져오기
 async def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Get current user from JWT token.
+    
+    Args:
+        token (str): JWT token from Authorization header
+        
+    Returns:
+        User: Current authenticated user
+        
+    Raises:
+        HTTPException: If token is invalid or expired
+    """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -198,6 +210,21 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         username: str = payload.get("sub")
         if username is None:
             raise credentials_exception
+            
+        # Check token expiration
+        exp = payload.get("exp")
+        if exp is None:
+            raise credentials_exception
+            
+        # Convert exp to datetime and compare
+        exp_datetime = datetime.fromtimestamp(exp, tz=timezone.utc)
+        if datetime.now(timezone.utc) >= exp_datetime:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has expired",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            
         token_data = TokenData(username=username)
 
     except JWTError:
@@ -209,14 +236,25 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     
     return user
 
-@app.post('/user/signup')
+
+@app.post('/user/signup', response_model=dict)
 async def signup(user: UserCreate, db: Session = Depends(get_db)):
+    """
+    Create a new user account.
+    
+    Args:
+        user (UserCreate): User information including username, password, name, age, gender, height, and weight
+        
+    Returns:
+        dict: Success message
+        
+    Raises:
+        HTTPException: If username already exists
+    """
     check_user_in_db = db.query(User).filter(User.username == user.username).all()
-    print(check_user_in_db)
-    if check_user_in_db:  # 이미 존재하는 사용자인지 확인
+    if check_user_in_db:
         raise HTTPException(status_code=409, detail="Username already exists")
     
-    # 사용자 정보 저장
     new_user = User(
         username = user.username,
         password = get_password_hash(user.password),
@@ -234,14 +272,24 @@ async def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post('/user/login', response_model=Token)
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # 유저 인증
+    """
+    Authenticate user and return JWT token.
+    
+    Args:
+        form_data (OAuth2PasswordRequestForm): Username and password
+        
+    Returns:
+        Token: JWT access token and token type
+        
+    Raises:
+        HTTPException: If credentials are invalid
+    """
     user = db.query(User).filter(User.username == form_data.username).first()
     verify_user = False if user is None else verify_password(form_data.password, user.password)
     
-    if not verify_user: 
+    if not verify_user:
         raise HTTPException(status_code=401, detail="Incorrect username or password")
     
-    # 인증 성공시 JWT 토큰 생성 및 반환
     access_token = create_token(form_data.username)
     return {"access_token": access_token, "token_type": "bearer"}
 
@@ -268,7 +316,19 @@ AIURL = "https://open-api.jejucodingcamp.workers.dev/"
 
 @app.post('/chat', response_model=ChatResponse)
 async def chat_endpoint(question_content: QuestionContent):
-    user_data = [  # 직접 배열로 전송
+    """
+    Send a chat request to AI service and get response.
+    
+    Args:
+        question_content (QuestionContent): Question content to send to AI
+        
+    Returns:
+        ChatResponse: AI service response
+        
+    Raises:
+        HTTPException: If API call fails
+    """
+    user_data = [
         {
             "role": "system",
             "content": "assistant는 건강 관리 루틴을 잘 제시해주고, 식단 을 잘 추천해주는 헬스 트레이너야!\n\n답변은 1.프로필 분석, 2. 건강 관리 루틴과 추천 식단, 3. 추천 팁 이렇게 나누어서 출력해줘\n1번은 user가 준 정보를 통해서 운동 목적을 통해서 프로필을 분석해줘. 구체적인 목표가 있다면 더 구체적으로 분석해줘.\n2번은 건강 관리 루틴과 식단은 일차 별(Day1, Day2...)로 건강 관리 루틴 -> 식단 순서로 추천해줘. 표로 만들어주면 좋겠어.\n3번은 실생활에서 건강을 위한 팁들을 알려주면 좋겠어\n 그리고 각각 1번 2번 3번 앞에 ###을 배치함으로써 구분이 가능하게 해줘."
@@ -281,29 +341,16 @@ async def chat_endpoint(question_content: QuestionContent):
     
     try:
         async with httpx.AsyncClient() as client:
-            # 요청 직전의 데이터 출력
-            print("Sending request with data:")
-            print(json.dumps(user_data, ensure_ascii=False, indent=2))
             timeout = httpx.Timeout(10.0, read=None)
-
             response = await client.post(
                 AIURL,
-                headers={
-                    "Content-Type": "application/json",
-                },
+                headers={"Content-Type": "application/json"},
                 json=user_data,
                 timeout=timeout
             )
             
-            # 응답 상세 정보 출력
-            print(f"Response status: {response.status_code}")
-            print(f"Response headers: {response.headers}")
-            print(f"Response content: {response.text}")
-            
             if response.status_code == 200:
-                response_data = response.json()
-                print(f"Parsed response data: {json.dumps(response_data, ensure_ascii=False, indent=2)}")
-                return ChatResponse(**response_data)
+                return ChatResponse(**response.json())
             else:
                 raise HTTPException(
                     status_code=response.status_code,
@@ -311,20 +358,32 @@ async def chat_endpoint(question_content: QuestionContent):
                 )
                 
     except Exception as e:
-        print(f"Error type: {type(e)}")
-        print(f"Error message: {str(e)}")
-        print(f"Error details: {getattr(e, '__dict__', {})}")
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
+
+@app.post('/healthmate', response_model=dict)
+async def get_health_info(
+    question: QuestionCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Get personalized health information and routine based on user profile and goals.
+    
+    Args:
+        question (QuestionCreate): User's health goals and exercise preferences
+        current_user (User): Authenticated user information
         
-@app.post('/healthmate')
-async def get_health_info(question: QuestionCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # 성별 변환
+    Returns:
+        dict: AI-generated health management plan
+        
+    Raises:
+        HTTPException: If AI service fails or database operation fails
+    """
     gender: str = "남자" if current_user.gender == "M" else "여자"
     
-    # 질문 내용 구성
     question_content = (
         f"저의 프로필은 이름은 {current_user.name}이고, 나이는 {current_user.age}살, "
         f"키는 {current_user.height}cm이고 몸무게는 {current_user.weight}kg, 성별은 {gender}야. "
@@ -336,7 +395,6 @@ async def get_health_info(question: QuestionCreate, current_user: User = Depends
         question_content += f" 구체적인 목표는 {question.detailed_goal}이야."
     
     try:
-        # 질문 데이터베이스 저장
         new_question = Question(
             user_id=current_user.id,
             exercise_count=question.exercise_count,
@@ -347,20 +405,17 @@ async def get_health_info(question: QuestionCreate, current_user: User = Depends
         db.commit()
         db.refresh(new_question)
         
-        # AI 응답 요청
         content = QuestionContent(question_content=question_content)
         response = await chat_endpoint(content)
         
         if not response or not response.choices:
             raise HTTPException(status_code=500, detail="Invalid AI response format")
             
-        # AI 응답 파싱 및 저장
         ai_message = response.choices[0]["message"]["content"]
         
-        # Health 정보 저장
         health_info = Health(
             question_id=new_question.id,
-            profile_summary=ai_message.split('###')[1],  # 실제로는 AI 응답을 적절히 파싱해야 합니다
+            profile_summary=ai_message.split('###')[1],
             health_management_routine=ai_message.split('###')[2],
             additional_tip=ai_message.split('###')[3]
         )
@@ -370,8 +425,8 @@ async def get_health_info(question: QuestionCreate, current_user: User = Depends
         return {"message": ai_message}
         
     except Exception as e:
-        db.rollback()  # 에러 발생 시 트랜잭션 롤백
-        print(f"Error in get_health_info: {str(e)}")  # 로깅 추가
+        db.rollback()
+        print(f"Error in get_health_info: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
