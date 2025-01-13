@@ -48,6 +48,14 @@ Stacks 🐈
 ![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=Discord&logoColor=white)
 ![Gather](https://img.shields.io/badge/Gather-000000?style=for-the-badge&logo=Gather&logoColor=white)
 
+## API 명세서
+| 경로           | 메서드  | 설명   |
+|--------------|------|------|
+| /user/signup | post | 회원가입 |
+| /user/login  | post | 로그인  |
+| /chat        | post | chatGPT 통신 API  |
+| /healthmate  | post | 질문   |
+
 ## DB 설계도
 <div style="backgroundColor: .white;">
 <img width="500" alt="image" src="https://github.com/user-attachments/assets/4fbe2308-eee8-4310-9a4a-402cf17f0376">
