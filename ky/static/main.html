@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <style>
+        /* Previous CSS styles remain the same */
         .header {
             display: flex;
             justify-content: flex-end;
@@ -57,11 +58,6 @@
             border-radius: 8px;
         }
 
-        h1 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
         .form-group {
             margin-bottom: 20px;
         }
@@ -105,67 +101,22 @@
             display: none;
         }
 
-        .routine-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 40px;
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        #results {
+            margin-top: 30px;
+            display: none;
         }
 
-        .routine-table th {
-            background-color: #f8f9fa;
-            padding: 15px;
-            text-align: left;
-            border: 1px solid #eee;
-        }
-
-        .routine-table td {
-            padding: 15px;
-            border: 1px solid #eee;
-            vertical-align: top;
-        }
-
-        .day-header {
-            background-color: #f8f9fa;
-            font-weight: bold;
-            padding: 15px;
-        }
-
-        .content-cell {
-            padding: 15px;
-            line-height: 1.6;
-        }
-
-        .routine-cell, .diet-cell {
-            width: 50%;
-        }
-
-        .cell-title {
-            font-weight: bold;
-            color: #4285f4;
-            margin-bottom: 10px;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
+        .section {
+            margin-bottom: 30px;
             padding: 20px;
-        }
-
-        .intro-message {
-            text-align: center;
-            margin-bottom: 40px;
-            color: #333;
-            font-size: 1.2rem;
-            padding: 10px;
             background-color: #f8f9fa;
             border-radius: 8px;
         }
 
-        
-
+        .section h3 {
+            color: #4285f4;
+            margin-bottom: 15px;
+        }
     </style>
 </head>
 <body>
@@ -174,7 +125,8 @@
             <button onclick="handleLogout()" class="auth-button logout-button">로그아웃</button>
         </div>
     </header>
-<div class="intro-message">
+
+    <div class="intro-message">
         <h1>건강 관리 목표를 입력하고 루틴 및 식단을 추천받아보세요.</h1>
     </div>
 
@@ -186,18 +138,18 @@
             <h2>건강 관리 목표 입력</h2>
             <form id="healthForm" action="" method="post">
                 <div class="form-group">
-                    <label>운동 목적을 입력해 주세요.</label>
-                    <input type="text" id="exercise-purpose" placeholder="예) 체중 감량" required>
+                    <label>운동 횟수</label>
+                    <input type="text" id="exercise-count" placeholder="예) 3" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>운동 가능 횟수를 입력해 주세요.</label>
-                    <input type="text" id="exercise-frequency" placeholder="예) 3일" required>
+                    <label>건강 관리 목적</label>
+                    <input type="text" id="health-purpose" placeholder="예) 체중 감량" required>
                 </div>
                 
                 <div class="form-group">
-                    <label>구체적인 목표를 입력해 주세요.</label>
-                    <input type="text" id="specific-goal" placeholder="예) 체중 5kg 감량" required>
+                    <label>상세 목표</label>
+                    <input type="text" id="detailed-goal" placeholder="예) 체중 5kg 감량" required>
                 </div>
                 
                 <button type="submit">루틴 및 식단 추천!</button>
@@ -210,17 +162,22 @@
         맞춤형 루틴과 식단을 생성하고 있습니다...
     </div>
 
-    <table id="routineTable" class="routine-table" style="display: none;">
-        <thead>
-            <tr>
-                <th>Day</th>
-                <th>운동 루틴</th>
-                <th>추천 식단</th>
-            </tr>
-        </thead>
-        <tbody id="routineTableBody">
-        </tbody>
-    </table>
+    <div id="results">
+        <div class="section">
+            <h3>프로필 분석</h3>
+            <div id="profile-content"></div>
+        </div>
+        
+        <div class="section">
+            <h3>추천 루틴</h3>
+            <div id="routine-content"></div>
+        </div>
+        
+        <div class="section">
+            <h3>건강 관리 팁</h3>
+            <div id="tips-content"></div>
+        </div>
+    </div>
 
     <script>
         // 토큰 확인 및 리다이렉트
@@ -250,7 +207,6 @@
             const loading = document.getElementById('loading');
             const results = document.getElementById('results');
             
-            // 로딩 상태 표시
             loading.style.display = 'block';
             results.style.display = 'none';
             errorMessage.style.display = 'none';
@@ -280,15 +236,12 @@
 
                 const data = await response.json();
                 
-                // ### 구분자로 나눈 응답 처리
                 const sections = data.message.split('###');
                 
-                // 각 섹션 내용 표시
                 document.getElementById('profile-content').innerHTML = sections[1].replace(/\n/g, '<br>');
                 document.getElementById('routine-content').innerHTML = sections[2].replace(/\n/g, '<br>');
                 document.getElementById('tips-content').innerHTML = sections[3].replace(/\n/g, '<br>');
 
-                // 결과 표시
                 loading.style.display = 'none';
                 results.style.display = 'block';
 
@@ -299,13 +252,6 @@
                 loading.style.display = 'none';
             }
         });
-    </script>
-    <script>
-        function handleLogout() {
-            // 로그아웃 처리 로직을 여기에 구현
-            // 예: 세션/토큰 제거, 서버에 로그아웃 요청 등
-            location.href = './login.html';
-        }
     </script>
 </body>
 </html>

@@ -161,9 +161,7 @@
             <div class="signup-box">
                 <h1 class="signup-title">회원가입</h1>
                 
-                <div id="error-message" class="error-message"></div>
-                
-                <form id="signupForm" onsubmit="return handleSignup(event)">
+                <form action="http://127.0.0.1:8000/user/signup" method="post" id="signupForm"">
                     <div class="form-group">
                         <label for="id">아이디</label>
                         <input type="text" id="id" required placeholder="아이디를 입력하세요">
@@ -175,11 +173,6 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="password-confirm">비밀번호 확인</label>
-                        <input type="password" id="password-confirm" required placeholder="비밀번호를 다시 입력하세요">
-                    </div>
-                    
-                    <div class="form-group">
                         <label for="name">이름</label>
                         <input type="text" id="name" required placeholder="이름을 입력하세요">
                     </div>
@@ -187,6 +180,11 @@
                     <div class="form-group">
                         <label for="age">나이</label>
                         <input type="number" id="age" required placeholder="나이를 입력하세요" min="1" max="120">
+                    </div>
+
+                    <div class="form-group">
+                        <input type='radio' name='gender' value='male'/> 남성
+                        <input type='radio' name='gender' value='female'/> 여성
                     </div>
                     
                     <div class="form-group">
@@ -210,72 +208,45 @@
     </div>
 
     <script>
-        // 이미 로그인된 경우 메인 페이지로 리다이렉트
-        if (localStorage.getItem('token')) {
-            window.location.href = '/main.html';
-        }
-
-        async function handleSignup(event) {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', (event) => {
             event.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const passwordConfirm = document.getElementById('password-confirm').value;
-            const name = document.getElementById('name').value;
-            const age = document.getElementById('age').value;
-            const gender = document.querySelector('input[name="gender"]:checked')?.value;
-            const height = document.getElementById('height').value;
-            const weight = document.getElementById('weight').value;
-            const errorMessage = document.getElementById('error-message');
-            const successMessage = document.getElementById('success-message');
-            
-            errorMessage.style.display = 'none';
-            successMessage.style.display = 'none';
-            
-            // 비밀번호 확인
-            if (password !== passwordConfirm) {
-                errorMessage.textContent = '비밀번호가 일치하지 않습니다.';
-                errorMessage.style.display = 'block';
-                return false;
-            }
-            
-            try {
-                const response = await fetch('/user/signup', {
+            const id = event.target.id.value;
+            const password = event.target.password.value;
+            const name = event.target.name.value;
+            const age = event.target.age.value;
+            const gender = event.target.gender.value == "male" ? "M" : "F";
+            const height = event.target.height.value;
+            const weight = event.target.weight.value;
+            console.log(id, password, name, age, gender, height, weight)
+            // 기본적인 유효성 검사
+            if (id && password && name && age && gender && height && weight) {
+                // 여기에 회원가입 로직 구현
+                console.log('회원가입 시도:', { id, name, age, gender, height, weight });
+
+                fetch('http://127.0.0.1:8000/user/signup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        username,
-                        password,
-                        name,
-                        age: parseInt(age),
-                        gender,
-                        height: parseFloat(height),
-                        weight: parseFloat(weight)
+                        username: id,
+                        password: password,
+                        name: name,
+                        age: age,
+                        gender: gender,
+                        height: height,
+                        weight: weight,
                     })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data);
+                    location.href = `http://127.0.0.1:5500/ky/static/login.html`
                 });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    successMessage.textContent = '회원가입이 완료되었습니다. 로그인 페이지로 이동합니다.';
-                    successMessage.style.display = 'block';
-                    
-                    // 로그인 페이지로 리다이렉트
-                    setTimeout(() => {
-                        window.location.href = '/login.html';
-                    }, 1000);
-                } else {
-                    throw new Error(data.detail || '회원가입에 실패했습니다.');
-                }
-            } catch (error) {
-                errorMessage.textContent = error.message;
-                errorMessage.style.display = 'block';
             }
-            
-            return false;
-        }
+
+        });
     </script>
 </body>
 </html>
