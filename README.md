@@ -54,7 +54,7 @@ Stacks 🐈
 | /user/signup | post | 회원가입 |
 | /user/login  | post | 로그인  |
 | /chat        | post | chatGPT 통신 API  |
-| /healthmate  | post | 질문   |
+| /healthmate  | post | 건강 관리 루틴 및 추천 식단을 받아오는 api  |
 
 ## DB 설계도
 <div style="backgroundColor: .white;">
