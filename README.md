@@ -67,7 +67,7 @@ Stacks 🐈
 ![image](https://github.com/user-attachments/assets/37467f5a-a465-43c8-97f7-dbbadb872ec7)
 
 
-## 디렉토리 구조 📁(개발 완료 후, 업데이트 예정)
+## 디렉토리 구조 📁
 ```bash
 ┣━ 📄README.md
 ┣━ 📁venv/ # 가상환경
