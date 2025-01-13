@@ -70,11 +70,10 @@ Stacks 🐈
 ## 디렉토리 구조 📁(개발 완료 후, 업데이트 예정)
 ```bash
 ┣━ 📄README.md
-┣━ 📄main.py
 ┣━ 📁venv/ # 가상환경
 ┣━ 📁app/ # 애플리케이션 코드를 포함하는 폴더
-┃   ┣━ 📁models/ # 데이터베이스 모델을 정의하는 파일을 포함하는 폴더
-┃   ┣━ 📁routers/ # API 라우트를 정의하는 파일들 포함하는 폴더
-┃   ┗━ 📁schemas/ # Pydantic 모델을 정의하는 파일들 포함하는 폴더
+┃   ┣━ 📄main.py
+┃   ┣━ 📁image/ # 이미지
+┃   ┣━ 📁static/ # Frontend 파일
 ┗━ 📄requirements.txt # 프로젝트에서 사용하는 패키지 목록
 ```
